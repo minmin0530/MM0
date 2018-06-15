@@ -1,8 +1,8 @@
 //
 //  GameViewController.swift
-//  MM0
+//  desktop
 //
-//  Created by IzumiYoshiki on 2018/06/16.
+//  Created by IzumiYoshiki on 2018/05/31.
 //  Copyright © 2018年 IzumiYoshiki. All rights reserved.
 //
 
@@ -23,6 +23,7 @@ class GameViewController: NSViewController {
             return
         }
 
+
         // Select the device to render with.  We choose the default device
         guard let defaultDevice = MTLCreateSystemDefaultDevice() else {
             print("Metal is not supported on this device")
@@ -31,7 +32,7 @@ class GameViewController: NSViewController {
 
         mtkView.device = defaultDevice
 
-        guard let newRenderer = Renderer(metalKitView: mtkView) else {
+        guard let newRenderer = MetalView(metalKitView: mtkView) else {
             print("Renderer cannot be initialized")
             return
         }
@@ -40,6 +41,8 @@ class GameViewController: NSViewController {
 
         renderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
 
+//        renderer.draw(in: mtkView)
         mtkView.delegate = renderer
+
     }
 }

@@ -1,8 +1,8 @@
 //
 //  ShaderTypes.h
-//  MM0
+//  desktop
 //
-//  Created by IzumiYoshiki on 2018/06/16.
+//  Created by IzumiYoshiki on 2018/05/31.
 //  Copyright © 2018年 IzumiYoshiki. All rights reserved.
 //
 
@@ -24,14 +24,14 @@
 typedef NS_ENUM(NSInteger, BufferIndex)
 {
     BufferIndexMeshPositions = 0,
-    BufferIndexMeshGenerics  = 1,
-    BufferIndexUniforms      = 2
+//    BufferIndexMeshGenerics  = 1,
+    BufferIndexUniforms      = 1
 };
 
 typedef NS_ENUM(NSInteger, VertexAttribute)
 {
     VertexAttributePosition  = 0,
-    VertexAttributeTexcoord  = 1,
+    VertexAttributeColor  = 1,
 };
 
 typedef NS_ENUM(NSInteger, TextureIndex)
@@ -43,6 +43,7 @@ typedef struct
 {
     matrix_float4x4 projectionMatrix;
     matrix_float4x4 modelViewMatrix;
+    vector_float3   lightPosition;
 } Uniforms;
 
 #endif /* ShaderTypes_h */

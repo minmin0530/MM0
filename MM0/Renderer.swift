@@ -1,8 +1,8 @@
 //
 //  Renderer.swift
-//  MM0
+//  desktop
 //
-//  Created by IzumiYoshiki on 2018/06/16.
+//  Created by IzumiYoshiki on 2018/05/31.
 //  Copyright © 2018年 IzumiYoshiki. All rights reserved.
 //
 
@@ -20,6 +20,16 @@ let maxBuffersInFlight = 3
 enum RendererError: Error {
     case badVertexDescriptor
 }
+
+struct Vertex {
+    var position: vector_float4
+    var color: vector_float4
+    var normal: vector_float3
+}
+let vertexData = [Vertex2(position: [-1.0, 0.0, 0.0, 1.0], color: [1, 0, 0, 1], normal: [0.0, 0.0, 1.0]),
+                  Vertex2(position: [ 0.0, 0.0, 0.0, 1.0], color: [0, 1, 0, 1], normal: [0.0, 0.0, 1.0]),
+                  Vertex2(position: [-0.5, 1.0, 0.0, 1.0], color: [0, 0, 1, 1], normal: [0.0, 0.0, 1.0]),]
+
 
 class Renderer: NSObject, MTKViewDelegate {
 
@@ -101,21 +111,21 @@ class Renderer: NSObject, MTKViewDelegate {
 
         let mtlVertexDescriptor = MTLVertexDescriptor()
 
-        mtlVertexDescriptor.attributes[VertexAttribute.position.rawValue].format = MTLVertexFormat.float3
-        mtlVertexDescriptor.attributes[VertexAttribute.position.rawValue].offset = 0
-        mtlVertexDescriptor.attributes[VertexAttribute.position.rawValue].bufferIndex = BufferIndex.meshPositions.rawValue
+//        mtlVertexDescriptor.attributes[VertexAttribute.position.rawValue].format = MTLVertexFormat.float4
+//        mtlVertexDescriptor.attributes[VertexAttribute.position.rawValue].offset = 0
+//        mtlVertexDescriptor.attributes[VertexAttribute.position.rawValue].bufferIndex = BufferIndex.meshPositions.rawValue
+//
+//        mtlVertexDescriptor.attributes[VertexAttribute.color.rawValue].format = MTLVertexFormat.float4
+//        mtlVertexDescriptor.attributes[VertexAttribute.color.rawValue].offset = 0
+//        mtlVertexDescriptor.attributes[VertexAttribute.color.rawValue].bufferIndex = BufferIndex.uniforms.rawValue
 
-        mtlVertexDescriptor.attributes[VertexAttribute.texcoord.rawValue].format = MTLVertexFormat.float2
-        mtlVertexDescriptor.attributes[VertexAttribute.texcoord.rawValue].offset = 0
-        mtlVertexDescriptor.attributes[VertexAttribute.texcoord.rawValue].bufferIndex = BufferIndex.meshGenerics.rawValue
-
-        mtlVertexDescriptor.layouts[BufferIndex.meshPositions.rawValue].stride = 12
+        mtlVertexDescriptor.layouts[BufferIndex.meshPositions.rawValue].stride = 16
         mtlVertexDescriptor.layouts[BufferIndex.meshPositions.rawValue].stepRate = 1
         mtlVertexDescriptor.layouts[BufferIndex.meshPositions.rawValue].stepFunction = MTLVertexStepFunction.perVertex
 
-        mtlVertexDescriptor.layouts[BufferIndex.meshGenerics.rawValue].stride = 8
-        mtlVertexDescriptor.layouts[BufferIndex.meshGenerics.rawValue].stepRate = 1
-        mtlVertexDescriptor.layouts[BufferIndex.meshGenerics.rawValue].stepFunction = MTLVertexStepFunction.perVertex
+        mtlVertexDescriptor.layouts[BufferIndex.uniforms.rawValue].stride = 16
+        mtlVertexDescriptor.layouts[BufferIndex.uniforms.rawValue].stepRate = 1
+        mtlVertexDescriptor.layouts[BufferIndex.uniforms.rawValue].stepFunction = MTLVertexStepFunction.perVertex
 
         return mtlVertexDescriptor
     }
@@ -127,8 +137,8 @@ class Renderer: NSObject, MTKViewDelegate {
 
         let library = device.makeDefaultLibrary()
 
-        let vertexFunction = library?.makeFunction(name: "vertexShader")
-        let fragmentFunction = library?.makeFunction(name: "fragmentShader")
+        let vertexFunction = library?.makeFunction(name: "vertex_func")
+        let fragmentFunction = library?.makeFunction(name: "fragment_func")
 
         let pipelineDescriptor = MTLRenderPipelineDescriptor()
         pipelineDescriptor.label = "RenderPipeline"
@@ -162,7 +172,7 @@ class Renderer: NSObject, MTKViewDelegate {
             throw RendererError.badVertexDescriptor
         }
         attributes[VertexAttribute.position.rawValue].name = MDLVertexAttributePosition
-        attributes[VertexAttribute.texcoord.rawValue].name = MDLVertexAttributeTextureCoordinate
+        attributes[VertexAttribute.color.rawValue].name = MDLVertexAttributeColor
 
         mdlMesh.vertexDescriptor = mdlVertexDescriptor
 
@@ -200,16 +210,22 @@ class Renderer: NSObject, MTKViewDelegate {
     private func updateGameState() {
         /// Update any game state before rendering
 
-        uniforms[0].projectionMatrix = projectionMatrix
-
-        let rotationAxis = float3(1, 1, 0)
-        let modelMatrix = matrix4x4_rotation(radians: rotation, axis: rotationAxis)
-        let viewMatrix = matrix4x4_translation(0.0, 0.0, -8.0)
-        uniforms[0].modelViewMatrix = simd_mul(viewMatrix, modelMatrix)
-        rotation += 0.01
+//        uniforms[0].projectionMatrix = projectionMatrix
+//
+//        let rotationAxis = float3(1, 1, 0)
+//        let modelMatrix = matrix4x4_rotation(radians: rotation, axis: rotationAxis)
+//        let viewMatrix = matrix4x4_translation(0.0, 0.0, 8.0)
+//        uniforms[0].modelViewMatrix = simd_mul(viewMatrix, modelMatrix)
+//        rotation += 0.01
     }
 
     func draw(in view: MTKView) {
+        
+        NSLog("3333333");
+        
+//        let dirtyRect = NSMakeRect(0, 0, 100, 100)
+//view.draw(dirtyRect)
+        let vertexBuffer = device.makeBuffer(bytes: vertexData, length: 32, options: [])
         /// Per frame updates hare
 
         _ = inFlightSemaphore.wait(timeout: DispatchTime.distantFuture)
@@ -244,31 +260,38 @@ class Renderer: NSObject, MTKViewDelegate {
                     
                     renderEncoder.setDepthStencilState(depthState)
                     
-                    renderEncoder.setVertexBuffer(dynamicUniformBuffer, offset:uniformBufferOffset, index: BufferIndex.uniforms.rawValue)
-                    renderEncoder.setFragmentBuffer(dynamicUniformBuffer, offset:uniformBufferOffset, index: BufferIndex.uniforms.rawValue)
+                    renderEncoder.setVertexBuffer(vertexBuffer, offset:0, index:0)
                     
-                    for (index, element) in mesh.vertexDescriptor.layouts.enumerated() {
-                        guard let layout = element as? MDLVertexBufferLayout else {
-                            return
-                        }
-                        
-                        if layout.stride != 0 {
-                            let buffer = mesh.vertexBuffers[index]
-                            renderEncoder.setVertexBuffer(buffer.buffer, offset:buffer.offset, index: index)
-                        }
-                    }
+                    var timeBuffer: MTLBuffer! = nil
+                    timeBuffer = device.makeBuffer(length: MemoryLayout<Float>.size, options: [])
+                    timeBuffer.label = "time"
+                    renderEncoder.setFragmentBuffer(timeBuffer, offset:0, index:1)
+            //        renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3, instanceCount: 1)
+//                    renderEncoder.setVertexBuffer(dynamicUniformBuffer, offset:uniformBufferOffset, index: BufferIndex.uniforms.rawValue)
+//                    renderEncoder.setFragmentBuffer(dynamicUniformBuffer, offset:uniformBufferOffset, index: BufferIndex.uniforms.rawValue)
                     
-                    renderEncoder.setFragmentTexture(colorMap, index: TextureIndex.color.rawValue)
+//                    for (index, element) in mesh.vertexDescriptor.layouts.enumerated() {
+//                        guard let layout = element as? MDLVertexBufferLayout else {
+//                            return
+//                        }
+//
+//                        if layout.stride != 0 {
+//                            let buffer = mesh.vertexBuffers[index]
+//                            renderEncoder.setVertexBuffer(buffer.buffer, offset:buffer.offset, index: index)
+//                        }
+//                    }
                     
-                    for submesh in mesh.submeshes {
-                        renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                                            indexCount: submesh.indexCount,
-                                                            indexType: submesh.indexType,
-                                                            indexBuffer: submesh.indexBuffer.buffer,
-                                                            indexBufferOffset: submesh.indexBuffer.offset)
-                        
-                    }
+//                    renderEncoder.setFragmentTexture(colorMap, index: TextureIndex.color.rawValue)
                     
+//                    for submesh in mesh.submeshes {
+//                        renderEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+//                                                            indexCount: submesh.indexCount,
+//                                                            indexType: submesh.indexType,
+//                                                            indexBuffer: submesh.indexBuffer.buffer,
+//                                                            indexBufferOffset: submesh.indexBuffer.offset)
+//
+//                    }
+
                     renderEncoder.popDebugGroup()
                     
                     renderEncoder.endEncoding()
@@ -285,42 +308,7 @@ class Renderer: NSObject, MTKViewDelegate {
 
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
         /// Respond to drawable size or orientation changes here
-
         let aspect = Float(size.width) / Float(size.height)
         projectionMatrix = matrix_perspective_right_hand(fovyRadians: radians_from_degrees(65), aspectRatio:aspect, nearZ: 0.1, farZ: 100.0)
     }
-}
-
-// Generic matrix math utility functions
-func matrix4x4_rotation(radians: Float, axis: float3) -> matrix_float4x4 {
-    let unitAxis = normalize(axis)
-    let ct = cosf(radians)
-    let st = sinf(radians)
-    let ci = 1 - ct
-    let x = unitAxis.x, y = unitAxis.y, z = unitAxis.z
-    return matrix_float4x4.init(columns:(vector_float4(    ct + x * x * ci, y * x * ci + z * st, z * x * ci - y * st, 0),
-                                         vector_float4(x * y * ci - z * st,     ct + y * y * ci, z * y * ci + x * st, 0),
-                                         vector_float4(x * z * ci + y * st, y * z * ci - x * st,     ct + z * z * ci, 0),
-                                         vector_float4(                  0,                   0,                   0, 1)))
-}
-
-func matrix4x4_translation(_ translationX: Float, _ translationY: Float, _ translationZ: Float) -> matrix_float4x4 {
-    return matrix_float4x4.init(columns:(vector_float4(1, 0, 0, 0),
-                                         vector_float4(0, 1, 0, 0),
-                                         vector_float4(0, 0, 1, 0),
-                                         vector_float4(translationX, translationY, translationZ, 1)))
-}
-
-func matrix_perspective_right_hand(fovyRadians fovy: Float, aspectRatio: Float, nearZ: Float, farZ: Float) -> matrix_float4x4 {
-    let ys = 1 / tanf(fovy * 0.5)
-    let xs = ys / aspectRatio
-    let zs = farZ / (nearZ - farZ)
-    return matrix_float4x4.init(columns:(vector_float4(xs,  0, 0,   0),
-                                         vector_float4( 0, ys, 0,   0),
-                                         vector_float4( 0,  0, zs, -1),
-                                         vector_float4( 0,  0, zs * nearZ, 0)))
-}
-
-func radians_from_degrees(_ degrees: Float) -> Float {
-    return (degrees / 180) * .pi
 }
