@@ -22,8 +22,8 @@ class MetalView: Renderer {
 //    var dynamicUniformBuffer2: MTLBuffer
     var mtlVertexDescriptor2: MTLVertexDescriptor
     
-    var eye: float3 = float3(0, 0, 4)
-    var light: float3 = float3(-10.5, 0.5, 1.0)
+    var eye: float3 = float3(0.0, 0.0, 4)
+    var light: float3 = float3(-450.0, -450.0, 2.0)
     override init?(metalKitView: MTKView) {
         
         metalKitView.depthStencilPixelFormat = MTLPixelFormat.depth32Float_stencil8
@@ -97,22 +97,28 @@ class MetalView: Renderer {
         //matrix4x4_translation(0.0, 0.0, -8.0)
         uniforms[0].modelViewMatrix = simd_mul(viewMatrix, modelMatrix)
         uniforms[0].lightPosition = light
-    //    rotation += 0.01
+        rotation += 0.01
 
 //        eye.z -= 0.01
-        light.x += 0.1
-        
-        
+//        light.x -= 1
+//        light.y -= 1
+
+//        NSLog(String(light.x))
         
         view.device = MTLCreateSystemDefaultDevice()
         guard let device = view.device else {
             NSLog("Failed to create Metal device")
             return
         }
-        let vertexData = [Vertex2(position: [-1.0, 0.0, 0.0, 1.0], color: [1, 0, 0, 1], normal: [0.0, 0.0, 1.0]),
-                          Vertex2(position: [ 0.0, 0.0, 0.0, 1.0], color: [0, 1, 0, 1], normal: [0.0, 0.0, 1.0]),
-                          Vertex2(position: [-0.5, 1.0, 0.0, 1.0], color: [0, 0, 1, 1], normal: [0.0, 0.0, 1.0]),]
-        let vertexBuffer = device.makeBuffer(bytes: vertexData, length: 41 * vertexData.count, options:[])
+        let vertexData = [
+            Vertex2(position: [ 1.0,  0.0, 0.0, 1.0], color: [0, 0, 1, 1], normal: [0.0, 0.0, 1.0]),
+            Vertex2(position: [-1.0,  0.0, 0.0, 1.0], color: [0, 0, 1, 1], normal: [0.0, 0.0, 1.0]),
+            Vertex2(position: [ 0.0,  1.0, 0.0, 1.0], color: [0, 0, 1, 1], normal: [0.0, 0.0, 1.0]),
+            Vertex2(position: [ 1.0,  0.0, 0.0, 1.0], color: [0, 0, 1, 1], normal: [0.0, 0.0, 1.0]),
+            Vertex2(position: [-1.0,  0.0, 0.0, 1.0], color: [0, 0, 1, 1], normal: [0.0, 0.0, 1.0]),
+            Vertex2(position: [ 0.0, -1.0, 0.0, 1.0], color: [0, 0, 1, 1], normal: [0.0, 0.0, 1.0]),
+                          ]
+        let vertexBuffer = device.makeBuffer(bytes: vertexData, length: 82 * vertexData.count, options:[])
         
         guard let library = device.makeDefaultLibrary() else {
             NSLog("Failed to create library")
@@ -148,7 +154,7 @@ class MetalView: Renderer {
 
             
             
-            renderCommandEncoder?.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3, instanceCount: 1)
+            renderCommandEncoder?.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6, instanceCount: 2)
             renderCommandEncoder?.endEncoding()
             commandBuffer?.present(_: drawable)
             commandBuffer?.commit()

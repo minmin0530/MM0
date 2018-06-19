@@ -40,18 +40,22 @@ vertex InOut2 vertex_func(constant InOut *vertices [[buffer(0)]],
     InOut2 out;
     out.position = uniforms.projectionMatrix * uniforms.modelViewMatrix * vertices[vid].position;
     out.color = vertices[vid].color;
-    out.normal = vertices[vid].normal;
+    out.normal = ( uniforms.projectionMatrix * uniforms.modelViewMatrix * float4(vertices[vid].normal, 1.0) ).xyz;
     out.light = uniforms.lightPosition;
     return out;//vertices[vid];
 }
 
 fragment float4 fragment_func(InOut2 vert [[stage_in]]) {
    // float4 outColor = float4(vert.color.r, vert.color.g, vert.color.b, 1);
-    float3 lightColor = float3(0.5, 0.5, 0.75);
+    float3 lightColor = float3(0.5, 0.5, 0.5);
+//    float3 light = normalize(vert.light);
+    float3 halfway = normalize(vert.light.xyz + vert.position.xyz);
+    float specular = pow(max(dot(vert.normal, halfway), 0.0), 5);
     
     float directional = max(dot(normalize(vert.light) , vert.normal), 0.0);
    // directional = directional / normalize(vert.light);
-    float3 vLighting = vert.color.rgb + (lightColor * directional);
+//    directional *= 5;
+    float3 vLighting = vert.color.rgb + (lightColor * (directional + specular));
     
     return float4(vLighting, vert.color.a);
 
